@@ -20,7 +20,8 @@ import FormLabel from "@mui/material/FormLabel";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
 import { API } from "./API";
-
+import { useFormik } from "formik";
+import { teacherValidationSchema } from "./validation";
 function EditTeacher() {
   const { id } = useParams();
 
@@ -57,92 +58,121 @@ function EditTeacher() {
 }
 function EditInfo({ teacher }) {
   const history = useHistory();
-  const [name, setName] = useState(teacher.name);
-  const [dt, setDt] = useState(new Date(teacher.doj));
-  const [gender, setGender] = useState(teacher.gender);
-  const [contact, setContact] = useState(teacher.contact);
-  const [address, setAddress] = useState(teacher.address);
-  const handleSubmit = (event) => {
-    const editT = {
-      name: name,
-      doj: dt,
-      gender: gender,
-      contact: contact,
-      address: address,
-    };
-    fetch(`${API}/teachers/${teacher.id}`, {
-      method: "PUT",
-      body: JSON.stringify(editT),
-      headers: { "Content-Type": "application/json" },
-    }).then(() => history.push("/listT"));
 
-    event.preventDefault();
-  };
+  const formik = useFormik({
+    initialValues: {
+      name: teacher.name,
+      doj: new Date(teacher.doj),
+      gender: teacher.gender,
+      contact: teacher.contact,
+      address: teacher.address,
+    },
+    validationSchema: teacherValidationSchema,
+    onSubmit: (editT) => {
+      fetch(`${API}/teachers/${teacher.id}`, {
+        method: "PUT",
+        body: JSON.stringify(editT),
+        headers: { "Content-Type": "application/json" },
+      }).then(() => history.push("/listT"));
+    },
+  });
 
   return (
-    <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
+    <Box
+      component="form"
+      noValidate
+      onSubmit={formik.handleSubmit}
+      sx={{ mt: 3 }}
+    >
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <TextField
-            name="fullname"
-            defaultValue={name}
-            onChange={(e) => setName(e.target.value)}
+            name="name"
             required
             fullWidth
-            id="full"
+            id="name"
             label="Full Name"
+            autoFocus
+            defaultValue={formik.values.name}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.errors.name && formik.touched.name}
+            helperText={formik.errors.name}
           />
         </Grid>
 
         <Grid item xs={12}>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
+              id="doj"
+              name="doj"
               disableFuture
               label="DOJ"
               openTo="year"
               views={["year", "month", "day"]}
-              value={dt}
-              onChange={(ndt) => {
-                setDt(ndt);
+              value={formik.values.doj}
+              onChange={(doj) => {
+                //doj is the variable which contain the selected date
+                //You can set it anywhere
+                formik.setFieldValue("doj", doj);
               }}
+              onBlur={formik.handleBlur}
               renderInput={(params) => (
-                <TextField {...params} fullWidth label="DOJ" />
+                <TextField
+                  {...params}
+                  fullWidth
+                  label="DOJ"
+                  error={formik.errors.doj && formik.touched.doj}
+                  helperText={formik.errors.doj}
+                />
               )}
             />
           </LocalizationProvider>
         </Grid>
 
         <Grid item xs={12}>
-          {/* <FormControl fullWidth> */}
-          <FormLabel id="demo-controlled-radio-buttons-group">Gender</FormLabel>
-          <RadioGroup
-            aria-labelledby="demo-controlled-radio-buttons-group"
-            name="controlled-radio-buttons-group"
-            defaultValue={gender}
-            onChange={(e) => {
-              setGender(e.target.value);
-            }}
-          >
-            <FormControlLabel
-              value="Female"
-              control={<Radio />}
-              label="Female"
-            />
-            <FormControlLabel value="Male" control={<Radio />} label="Male" />
-          </RadioGroup>
-          {/* </FormControl> */}
+          <FormControl fullWidth>
+            <FormLabel id="demo-controlled-radio-buttons-group">
+              Gender
+            </FormLabel>
+            <RadioGroup
+              id="gender"
+              aria-labelledby="demo-controlled-radio-buttons-group"
+              name="gender"
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.errors.gender && formik.touched.gender}
+              helpertext={formik.errors.gender}
+            >
+              <FormControlLabel
+                value="Female"
+                control={<Radio />}
+                checked={formik.values.gender === "Female"}
+                label="Female"
+              />
+              <FormControlLabel
+                value="Male"
+                control={<Radio />}
+                checked={formik.values.gender === "Male"}
+                label="Male"
+              />
+            </RadioGroup>
+          </FormControl>
         </Grid>
         <Grid item xs={12}>
           <TextField
             required
             label="Contact Number"
-            defaultValue={contact}
             type="tel"
             id="contact"
             placeholder="xxxxxxxxxx"
             fullWidth
             name="contact"
-            onChange={(e) => setContact(e.target.value)}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            defaultValue={formik.values.contact}
+            error={formik.errors.contact && formik.touched.contact}
+            helperText={formik.errors.contact}
           />
         </Grid>
         <Grid item xs={12}>
@@ -152,8 +182,11 @@ function EditInfo({ teacher }) {
             id="address"
             label="Address"
             name="address"
-            defaultValue={address}
-            onChange={(e) => setAddress(e.target.value)}
+            defaultValue={formik.values.address}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.errors.address && formik.touched.address}
+            helperText={formik.errors.address}
           />
         </Grid>
       </Grid>

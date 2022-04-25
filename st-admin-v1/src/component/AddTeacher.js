@@ -1,4 +1,4 @@
-import React, {  useState } from "react";
+import React, { useState } from "react";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
@@ -17,32 +17,29 @@ import FormLabel from "@mui/material/FormLabel";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
 import { API } from "./API";
+import { useFormik } from "formik";
+import { teacherValidationSchema } from "./validation";
 function AddTeacher() {
   const history = useHistory();
-  const handleSubmit = (event) => {
-    const data = new FormData(event.currentTarget);
-    const newteacher = {
-      id: parseInt(Math.floor(Math.random() * 20)),
-      name: data.get("fullname").toString(),
-      doj: dt.toString(),
-      gender: gender,
-      contact: data.get("contact").toString(),
-      address: data.get("address").toString(),
-    };
 
-    fetch(`${API}/teachers`, {
-      method: "POST",
-      body: JSON.stringify(newteacher),
-      headers: { "Content-Type": "application/json" },
-    }).then(() => history.push("./listT"));
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+      doj: "",
+      gender: "Female",
+      contact: "",
+      address: "",
+    },
+    validationSchema: teacherValidationSchema,
+    onSubmit: (newTeacher) => {
+      fetch(`${API}/teachers`, {
+        method: "POST",
+        body: JSON.stringify(newTeacher),
+        headers: { "Content-Type": "application/json" },
+      }).then(() => history.push("./listT"));
+    },
+  });
 
-    event.preventDefault();
-  };
-  const [gender, setGender] = useState("Female");
-  const [dt, setDt] = useState(new Date());
-  const handleChange = (e) => {
-    setGender(e.target.value);
-  };
   return (
     <Container component="main" maxWidth="xs">
       <Box
@@ -59,32 +56,53 @@ function AddTeacher() {
         <Typography component="h1" variant="h5">
           Add Teacher
         </Typography>
-        <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
+        <Box
+          component="form"
+          noValidate
+          onSubmit={formik.handleSubmit}
+          sx={{ mt: 3 }}
+        >
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <TextField
-                name="fullname"
+                name="name"
                 required
                 fullWidth
-                id="full"
+                id="name"
                 label="Full Name"
                 autoFocus
+                values={formik.values.name}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.errors.name && formik.touched.name}
+                helperText={formik.errors.name}
               />
             </Grid>
 
             <Grid item xs={12}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
+                  id="doj"
+                  name="doj"
                   disableFuture
                   label="DOJ"
                   openTo="year"
                   views={["year", "month", "day"]}
-                  value={dt}
-                  onChange={(newValue) => {
-                    setDt(newValue);
+                  value={formik.values.doj}
+                  onChange={(doj) => {
+                    //doj is the variable which contain the selected date
+                    //You can set it anywhere
+                    formik.setFieldValue("doj", doj);
                   }}
+                  onBlur={formik.handleBlur}
                   renderInput={(params) => (
-                    <TextField {...params} fullWidth label="DOJ" />
+                    <TextField
+                      {...params}
+                      fullWidth
+                      label="DOJ"
+                      error={formik.errors.doj && formik.touched.doj}
+                      helperText={formik.errors.doj}
+                    />
                   )}
                 />
               </LocalizationProvider>
@@ -96,19 +114,24 @@ function AddTeacher() {
                   Gender
                 </FormLabel>
                 <RadioGroup
+                  id="gender"
                   aria-labelledby="demo-controlled-radio-buttons-group"
-                  name="controlled-radio-buttons-group"
-                  value={gender}
-                  onChange={handleChange}
+                  name="gender"
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.errors.gender && formik.touched.gender}
+                  helpertext={formik.errors.gender}
                 >
                   <FormControlLabel
                     value="Female"
                     control={<Radio />}
+                    checked={formik.values.gender === "Female"}
                     label="Female"
                   />
                   <FormControlLabel
                     value="Male"
                     control={<Radio />}
+                    checked={formik.values.gender === "Male"}
                     label="Male"
                   />
                 </RadioGroup>
@@ -123,6 +146,11 @@ function AddTeacher() {
                 placeholder="xxxxxxxxxx"
                 fullWidth
                 name="contact"
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                values={formik.values.contact}
+                error={formik.errors.contact && formik.touched.contact}
+                helperText={formik.errors.contact}
               />
             </Grid>
             <Grid item xs={12}>
@@ -132,6 +160,11 @@ function AddTeacher() {
                 id="address"
                 label="Address"
                 name="address"
+                values={formik.values.address}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.errors.address && formik.touched.address}
+                helperText={formik.errors.address}
               />
             </Grid>
           </Grid>

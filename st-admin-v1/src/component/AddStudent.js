@@ -15,10 +15,13 @@ import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
 import { useHistory } from "react-router-dom";
 import Autocomplete from "@mui/material/Autocomplete";
+import { studentValidationSchema } from "./validation";
+import { useFormik } from "formik";
+
 function AddStudent() {
   const history = useHistory();
   const [classes, setClasses] = useState([]);
-  const [gr, setGr] = useState();
+
   function fetchData() {
     fetch(`${API}/classes`)
       .then((response) => response.json())
@@ -30,33 +33,26 @@ function AddStudent() {
     fetchData();
   }, []);
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const newStudent = {
-      id: parseInt(Math.floor(Math.random() * 20)),
-      name: data.get("fullname"),
-      adno: data.get("adNo"),
-      grade: gr,
-      fname: data.get("fName"),
-      mname: data.get("mName"),
-      contact: data.get("contact"),
-      gender: gender,
-      address: data.get("address"),
-    };
-
-
-    fetch(`${API}/students`, {
-      method: "POST",
-      body: JSON.stringify(newStudent),
-      headers: { "Content-Type": "application/json" },
-    }).then(() => history.push("./listS"));
-  };
-  const [gender, setGender] = useState("Female");
-
-  const handleChange = (e) => {
-    setGender(e.target.value);
-  };
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+      adno: "",
+      grade: "",
+      fname: "",
+      mname: "",
+      contact: "",
+      gender: "Female",
+      address: "",
+    },
+    validationSchema: studentValidationSchema,
+    onSubmit: (newStudent) => {
+      fetch(`${API}/students`, {
+        method: "POST",
+        body: JSON.stringify(newStudent),
+        headers: { "Content-Type": "application/json" },
+      }).then(() => history.push("./listS"));
+    },
+  });
   return (
     <Container component="main" maxWidth="xs">
       <Box
@@ -73,37 +69,60 @@ function AddStudent() {
         <Typography component="h1" variant="h5">
           Add Student
         </Typography>
-        <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
+        <Box
+          component="form"
+          noValidate
+          onSubmit={formik.handleSubmit}
+          sx={{ mt: 3 }}
+        >
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <TextField
-                name="fullname"
+                name="name"
                 required
                 fullWidth
-                id="full"
+                id="name"
                 label="Full Name"
                 autoFocus
+                values={formik.values.name}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.errors.name && formik.touched.name}
+                helperText={formik.errors.name}
               />
             </Grid>
             <Grid item sm={6}>
               <TextField
                 required
                 fullWidth
-                id="adNo"
+                id="adno"
                 label="Admission Number"
-                name="adNo"
+                name="adno"
+                values={formik.values.adno}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.errors.adno && formik.touched.adno}
+                helperText={formik.errors.adno}
               />
             </Grid>
             <Grid item sm={6}>
               <Autocomplete
                 disablePortal
                 id="grade"
-                onChange={(e, gr) => {
-                  setGr(gr.label);
+                name="grade"
+                values={formik.values.grade}
+                onChange={(e, grade) => {
+                  formik.setFieldValue("grade", grade.label);
                 }}
+                onBlur={formik.handleBlur}
                 options={classes}
                 renderInput={(params) => (
-                  <TextField {...params} label="Grade" />
+                  <TextField
+                    {...params}
+                    label="Grade"
+                    error={formik.errors.grade && formik.touched.grade}
+                    helperText={formik.errors.grade}
+                  />
                 )}
               />
             </Grid>
@@ -111,18 +130,28 @@ function AddStudent() {
               <TextField
                 required
                 fullWidth
-                id="fName"
+                id="fname"
                 label="Father's Name"
-                name="fName"
+                name="fname"
+                values={formik.values.fname}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.errors.fname && formik.touched.fname}
+                helperText={formik.errors.fname}
               />
             </Grid>
             <Grid item sm={6}>
               <TextField
                 required
                 fullWidth
-                id="mName"
+                id="mname"
                 label="Mother's Name"
-                name="mName"
+                name="mname"
+                values={formik.values.mname}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.errors.mname && formik.touched.mname}
+                helperText={formik.errors.mname}
               />
             </Grid>
 
@@ -135,6 +164,11 @@ function AddStudent() {
                 placeholder="xxxxxxxxxx"
                 fullWidth
                 name="contact"
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                values={formik.values.contact}
+                error={formik.errors.contact && formik.touched.contact}
+                helperText={formik.errors.contact}
               />
             </Grid>
             <Grid item xs={12}>
@@ -143,19 +177,24 @@ function AddStudent() {
                   Gender
                 </FormLabel>
                 <RadioGroup
+                  id="gender"
                   aria-labelledby="demo-controlled-radio-buttons-group"
-                  name="controlled-radio-buttons-group"
-                  value={gender}
-                  onChange={handleChange}
+                  name="gender"
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.errors.gender && formik.touched.gender}
+                  helpertext={formik.errors.gender}
                 >
                   <FormControlLabel
                     value="Female"
                     control={<Radio />}
+                    checked={formik.values.gender === "Female"}
                     label="Female"
                   />
                   <FormControlLabel
                     value="Male"
                     control={<Radio />}
+                    checked={formik.values.gender === "Male"}
                     label="Male"
                   />
                 </RadioGroup>
@@ -169,6 +208,11 @@ function AddStudent() {
                 id="address"
                 label="Address"
                 name="address"
+                values={formik.values.address}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.errors.address && formik.touched.address}
+                helperText={formik.errors.address}
               />
             </Grid>
           </Grid>
